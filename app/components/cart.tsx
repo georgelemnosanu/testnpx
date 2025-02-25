@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import { ro } from "date-fns/locale"
+import { useSendOrder } from "../hooks/useSendOrder"
 
 export function Cart() {
   const { state, dispatch } = useCart()
@@ -31,6 +32,7 @@ export function Cart() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash")
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const { sendOrder } = useSendOrder()
 
   const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -40,12 +42,10 @@ export function Cart() {
     }
   }
 
-  const handleConfirmOrder = () => {
-    dispatch({ type: "CONFIRM_ORDER" })
-    toast.success("Comanda a fost trimisă cu succes!")
-    setTimeout(() => {
-      dispatch({ type: "RESET_ORDER_CONFIRMATION" })
-    }, 3000)
+  
+
+  const handleConfirmOrder = async () => {
+    await sendOrder()
   }
 
   const handleRequestBill = () => {
@@ -142,11 +142,16 @@ export function Cart() {
                       </span>
                     </div>
                     {order.items.map((item, itemIndex) => (
-                      <div key={itemIndex} className="flex justify-between py-1">
-                        <span>
-                          {item.name} x{item.quantity}
-                        </span>
-                        <span className="font-medium">{item.price * item.quantity} lei</span>
+                      <div key={itemIndex} className="py-1">
+                        <div className="flex justify-between">
+                          <span>
+                            {item.name} x{item.quantity}
+                          </span>
+                          <span className="font-medium">{item.price * item.quantity} lei</span>
+                        </div>
+                        {item.notes && (
+                          <div className="text-xs text-muted-foreground mt-1 ml-4">Note: {item.notes}</div>
+                        )}
                       </div>
                     ))}
                     <div className="mt-2 border-t pt-2 text-right font-medium">Total comandă: {order.total} lei</div>
@@ -179,40 +184,48 @@ export function Cart() {
             <ScrollArea className="flex-1 -mx-6 px-6">
               <div className="space-y-4 py-4">
                 {state.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between space-x-4 rounded-lg border p-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {item.price} lei x {item.quantity}
-                      </p>
+                  <div key={item.id} className="flex flex-col space-y-2 rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {item.price} lei x {item.quantity}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {item.notes && (
+                      <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-2">
+                        <p className="font-medium text-xs mb-1">Note:</p>
+                        {item.notes}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

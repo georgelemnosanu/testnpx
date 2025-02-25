@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 
 interface CartItem {
@@ -7,6 +9,7 @@ interface CartItem {
   name: string
   price: number
   quantity: number
+  notes?: string // Add notes field
 }
 
 interface Order {
@@ -24,9 +27,10 @@ interface CartState {
 }
 
 type CartAction =
-  | { type: "ADD_ITEM"; payload: { id: number; name: string; price: number; quantity: number } }
+  | { type: "ADD_ITEM"; payload: { id: number; name: string; price: number; quantity: number; notes?: string } }
   | { type: "REMOVE_ITEM"; payload: number }
   | { type: "UPDATE_QUANTITY"; payload: { id: number; quantity: number } }
+  | { type: "UPDATE_NOTES"; payload: { id: number; notes: string } }
   | { type: "CLEAR_CART" }
   | { type: "CONFIRM_ORDER" }
   | { type: "RESET_ORDER_CONFIRMATION" }
@@ -49,7 +53,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       if (existingItem) {
         const updatedItems = state.items.map((item) =>
           item.id === action.payload.id
-            ? { ...item, quantity: item.quantity + action.payload.quantity }
+            ? { 
+                ...item, 
+                quantity: item.quantity + action.payload.quantity,
+                notes: action.payload.notes || item.notes // Keep existing notes if no new notes
+              }
             : item
         )
         return {
@@ -76,12 +84,21 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
     case "UPDATE_QUANTITY": {
       const newItems = state.items.map((item) =>
-        item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item
+        item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item,
       )
       return {
         ...state,
         items: newItems,
         total: newItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      }
+    }
+    case "UPDATE_NOTES": {
+      const newItems = state.items.map((item) =>
+        item.id === action.payload.id ? { ...item, notes: action.payload.notes } : item
+      )
+      return {
+        ...state,
+        items: newItems,
       }
     }
     case "CLEAR_CART":

@@ -34,17 +34,10 @@ interface MenuSectionProps {
 }
 
 export function MenuSection({ section }: MenuSectionProps) {
+  const { state, dispatch } = useCart()
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({})
   const [notes, setNotes] = useState<{ [key: number]: string }>({})
-  const { dispatch } = useCart()
-
-  const updateQuantity = (id: number, delta: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: Math.max(1, (prev[id] || 1) + delta),
-    }))
-  }
 
   const addToOrder = (item: MenuItem) => {
     dispatch({
@@ -54,8 +47,16 @@ export function MenuSection({ section }: MenuSectionProps) {
         name: item.name,
         price: item.price,
         quantity: quantities[item.id] || 1,
+        notes: notes[item.id], // Add notes to payload
       },
     })
+  }
+
+  const updateQuantity = (id: number, delta: number) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [id]: Math.max(1, (prev[id] || 1) + delta),
+    }))
   }
 
   const callWaiter = () => {
