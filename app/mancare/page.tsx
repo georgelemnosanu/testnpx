@@ -1,5 +1,9 @@
+import Link from "next/link"
 import { MenuSection } from "./menu-section"
+import { ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
+// This would typically come from an API or database
 const menuData = {
   sections: [
     {
@@ -80,7 +84,14 @@ export default function MancareMenu() {
   return (
     <main className="min-h-[100dvh] bg-[#1a1a1a] pb-20">
       <header className="sticky top-0 z-10 bg-[#1a1a1a] p-4 shadow-md">
-        <h1 className="text-xl sm:text-2xl font-bold text-white">Meniu Bucătărie</h1>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:text-yellow-500">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Meniu Bucătărie</h1>
+        </div>
       </header>
       <div className="p-4">
         {menuData.sections.map((section) => (

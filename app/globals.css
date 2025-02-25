@@ -119,3 +119,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Optimizări pentru mobile */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .active\:scale-98:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Prevent pull-to-refresh and other unwanted behaviors */
+html {
+  overscroll-behavior-y: none;
+  height: -webkit-fill-available;
+}
+
+body {
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+}
+
+/* Improve tap target sizes for mobile */
+button,
+a {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Optimize font rendering */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
