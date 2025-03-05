@@ -5,9 +5,9 @@ import Link from "next/link"
 import { MenuSection } from "./menu-section"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { MenuItem, MenuSection as MenuSectionType } from "@/app/mancare/types"
+import type { MenuItem, MenuSection as MenuSectionType } from "@/app/bar/types"
 
-export default function MancareMenu() {
+export default function BarMenu() {
   const [groupedItems, setGroupedItems] = useState<MenuSectionType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -15,9 +15,10 @@ export default function MancareMenu() {
   useEffect(() => {
     async function fetchMenuItems() {
       try {
-        const response = await fetch("http://localhost:8080/menuItem/viewMenuItemsBySpecialityClass/1")
+        // Folosim endpoint-ul pentru băuturi (speciality class 2)
+        const response = await fetch("http://localhost:8080/menuItem/viewMenuItemsBySpecialityClass/2")
         if (!response.ok) {
-          throw new Error("Eroare la încărcarea meniului")
+          throw new Error("Eroare la încărcarea meniului de băuturi")
         }
 
         // Obținem un array plat de MenuItem
@@ -57,11 +58,19 @@ export default function MancareMenu() {
   }, [])
 
   if (loading) {
-    return <div className="text-white">Se încarcă...</div>
+    return (
+      <div className="min-h-[100dvh] bg-[#1a1a1a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+      </div>
+    )
   }
 
   if (error) {
-    return <div className="text-red-500">Eroare: {error}</div>
+    return (
+      <div className="min-h-[100dvh] bg-[#1a1a1a] flex items-center justify-center">
+        <div className="text-red-500 p-4 bg-red-500/10 rounded-lg border border-red-500/20">Eroare: {error}</div>
+      </div>
+    )
   }
 
   return (
@@ -73,14 +82,18 @@ export default function MancareMenu() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Meniu Bucătărie</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Meniu Bar</h1>
         </div>
       </header>
 
       <div className="p-4">
-        {groupedItems.map((section) => (
-          <MenuSection key={section.title} section={section} />
-        ))}
+        {groupedItems.length > 0 ? (
+          groupedItems.map((section) => <MenuSection key={section.title} section={section} />)
+        ) : (
+          <div className="text-center text-white py-12">
+            <p>Nu există băuturi disponibile momentan.</p>
+          </div>
+        )}
       </div>
     </main>
   )
