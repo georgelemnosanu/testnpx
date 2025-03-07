@@ -82,12 +82,12 @@ export default function ProductsPage() {
       setIsLoading(true)
       try {
         // Fetch categories
-        const categoriesResponse = await fetch("http://localhost:8080/speciality/allSpeciality")
+        const categoriesResponse = await fetch("http://lmndev.com/speciality/allSpeciality")
         const categoriesData = await categoriesResponse.json()
         setCategories(categoriesData)
 
         // Fetch menu items
-        const itemsResponse = await fetch("http://localhost:8080/menuItem/viewAllMenuItems")
+        const itemsResponse = await fetch("http://lmndev.com/menuItem/viewAllMenuItems")
         const itemsData = await itemsResponse.json()
         setItems(itemsData)
       } catch (error) {
@@ -135,7 +135,7 @@ export default function ProductsPage() {
       })
   
       // Trimitem DIRECT la Spring, cu multipart/form-data
-      const response = await fetch("http://localhost:8080/menuItem/submitCreateMenuItem", {
+      const response = await fetch("http://lmndev.com/menuItem/submitCreateMenuItem", {
         method: "POST",
         body: formDataToSend,
       })
@@ -161,7 +161,7 @@ export default function ProductsPage() {
       })
 
       // Refresh the list
-      const itemsResponse = await fetch("http://localhost:8080/menuItem/viewAllMenuItems")
+      const itemsResponse = await fetch("http://lmndev.com/menuItem/viewAllMenuItems")
       const itemsData = await itemsResponse.json()
       setItems(itemsData)
     } catch (error) {

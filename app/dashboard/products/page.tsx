@@ -78,12 +78,12 @@ export default function ProductsPage() {
       setIsLoading(true)
       try {
         // Fetch categories
-        const categoriesResponse = await fetch("http://localhost:8080/speciality/allSpeciality")
+        const categoriesResponse = await fetch("http://lmndev.com/speciality/allSpeciality")
         const categoriesData = await categoriesResponse.json()
         setCategories(categoriesData)
 
         // Fetch menu items
-        const itemsResponse = await fetch("http://localhost:8080/menuItem/viewAllMenuItems")
+        const itemsResponse = await fetch("http://lmndev.com/menuItem/viewAllMenuItems")
         const itemsData = await itemsResponse.json()
         setItems(itemsData)
       } catch (error) {
@@ -128,8 +128,8 @@ export default function ProductsPage() {
 
       const response = await fetch(
         selectedItem
-          ? `http://localhost:8080/menuItem/updateMenuItem/${selectedItem.id}`
-          : "http://localhost:8080/menuItem/submitCreateMenuItem",
+          ? `http://lmndev.com/menuItem/updateMenuItem/${selectedItem.id}`
+          : "http://lmndev.com/menuItem/submitCreateMenuItem",
         {
           method: selectedItem ? "PUT" : "POST",
           body: formDataToSend,
@@ -141,7 +141,7 @@ export default function ProductsPage() {
       toast.success(selectedItem ? "Produsul a fost actualizat cu succes" : "Produsul a fost adăugat cu succes")
 
       // Refresh the list
-      const itemsResponse = await fetch("http://localhost:8080/menuItem/viewAllMenuItems")
+      const itemsResponse = await fetch("http://lmndev.com/menuItem/viewAllMenuItems")
       const itemsData = await itemsResponse.json()
       setItems(itemsData)
 
@@ -167,7 +167,7 @@ export default function ProductsPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:8080/menuItem/deleteMenuItem/${id}`, {
+      const response = await fetch(`http://lmndev.com/menuItem/deleteMenuItem/${id}`, {
         method: "DELETE",
       })
 
@@ -176,7 +176,7 @@ export default function ProductsPage() {
       toast.success("Produsul a fost șters cu succes")
 
       // Refresh the list
-      const itemsResponse = await fetch("http://localhost:8080/menuItem/viewAllMenuItems")
+      const itemsResponse = await fetch("http://lmndev.com/menuItem/viewAllMenuItems")
       const itemsData = await itemsResponse.json()
       setItems(itemsData)
     } catch (error) {
