@@ -16,7 +16,7 @@ export default function BarMenu() {
     async function fetchMenuItems() {
       try {
         // Folosim endpoint-ul pentru băuturi (speciality class 2)
-        const response = await fetch("https://lmndev.com/menuItem/viewMenuItemsBySpecialityClass/2")
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewMenuItemsBySpecialityClass/2`)
         if (!response.ok) {
           throw new Error("Eroare la încărcarea meniului de băuturi")
         }

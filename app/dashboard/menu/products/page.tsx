@@ -82,12 +82,12 @@ export default function ProductsPage() {
       setIsLoading(true)
       try {
         // Fetch categories
-        const categoriesResponse = await fetch("https://lmndev.com/speciality/allSpeciality")
+        const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/speciality/allSpeciality`)
         const categoriesData = await categoriesResponse.json()
         setCategories(categoriesData)
 
         // Fetch menu items
-        const itemsResponse = await fetch("https://lmndev.com/menuItem/viewAllMenuItems")
+        const itemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewAllMenuItems`)
         const itemsData = await itemsResponse.json()
         setItems(itemsData)
       } catch (error) {
@@ -135,7 +135,7 @@ export default function ProductsPage() {
       })
   
       // Trimitem DIRECT la Spring, cu multipart/form-data
-      const response = await fetch("https://lmndev.com/menuItem/submitCreateMenuItem", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/submitCreateMenuItem`, {
         method: "POST",
         body: formDataToSend,
       })
@@ -161,7 +161,7 @@ export default function ProductsPage() {
       })
 
       // Refresh the list
-      const itemsResponse = await fetch("https://lmndev.com/menuItem/viewAllMenuItems")
+      const itemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewAllMenuItems`)
       const itemsData = await itemsResponse.json()
       setItems(itemsData)
     } catch (error) {

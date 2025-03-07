@@ -71,9 +71,7 @@ export function Cart() {
 
   // Calculează totalul pentru toate comenzile de la masă
   const getTableOrdersTotal = () => {
-    const myTotal = getMyOrdersTotal()
-    const tableTotal = state.tableOrders.reduce((sum, order) => sum + order.total, 0)
-    return myTotal + tableTotal
+    return state.tableOrders.reduce((sum, order) => sum + order.total, 0)
   }
 
   // Reîmprospătează comenzile mesei când se deschide cart-ul
@@ -104,7 +102,7 @@ export function Cart() {
         console.log("Timer elapsed, calling close command endpoint...")
         try {
           const storedTableId = sessionStorage.getItem("tableId")
-          const response = await fetch(`https://lmndev.com/command/close/${storedTableId}`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/close/${storedTableId}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",

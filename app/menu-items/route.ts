@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     //       - path: http://localhost:8080/submitCreateMenuItem
     //       - FĂRĂ: headers: {"Content-Type": "application/json"}
     //         pentru că e multipart/form-data
-    const res = await fetch("https://lmndev.com/menuItem/submitCreateMenuItem", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/submitCreateMenuItem`, {
       method: "POST",
       body: formData, 
       // fetch va pune automat Content-Type: multipart/form-data

@@ -347,7 +347,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       console.log(`Fetching orders for table: ${state.tableId}`);
   
-      const response = await fetch(`https://lmndev.com/command/table/${state.tableId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/table/${state.tableId}`);
       if (!response.ok) throw new Error("Eroare la preluarea comenzilor");
   
       const orders: Command[] = await response.json();
