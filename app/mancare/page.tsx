@@ -15,7 +15,7 @@ export default function MancareMenu() {
   useEffect(() => {
     async function fetchMenuItems() {
       try {
-        const response = await fetch("http://lmndev.com/menuItem/viewMenuItemsBySpecialityClass/1")
+        const response = await fetch("https://lmndev.com/menuItem/viewMenuItemsBySpecialityClass/1")
         if (!response.ok) {
           throw new Error("Eroare la încărcarea meniului")
         }
