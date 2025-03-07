@@ -71,7 +71,7 @@ export default function OrdersPage() {
   // Fetch orders from the API
   const fetchOrders = async () => {
     try {
-      const response = await fetch("http://lmndev.com/command/viewAllCommand")
+      const response = await fetch("https://lmndev.com/command/viewAllCommand")
       if (!response.ok) throw new Error("Eroare la preluarea comenzilor")
 
       const apiOrders: ApiOrder[] = await response.json()
@@ -164,7 +164,7 @@ export default function OrdersPage() {
   // Update order status via API PATCH
   const updateOrderStatus = async (orderId: number, status: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
     try {
-      const response = await fetch(`http://lmndev.com/command/${orderId}`, {
+      const response = await fetch(`https://lmndev.com/command/${orderId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

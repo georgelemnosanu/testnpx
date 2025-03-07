@@ -104,7 +104,7 @@ export function Cart() {
         console.log("Timer elapsed, calling close command endpoint...")
         try {
           const storedTableId = sessionStorage.getItem("tableId")
-          const response = await fetch(`http://lmndev.com/command/close/${storedTableId}`, {
+          const response = await fetch(`https://lmndev.com/command/close/${storedTableId}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",

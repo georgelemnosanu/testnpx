@@ -6,7 +6,7 @@ import { NextResponse } from "next/server"
 export async function GET() {
   try {
     // Apelezi backend-ul Spring
-    const res = await fetch("http://lmndev.com/speciality/allSpeciality", {
+    const res = await fetch("https://lmndev.com/speciality/allSpeciality", {
       method: "GET",
       // Poți adăuga HEADERS dacă e nevoie, ex. Authorization
     })
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     // Trimite direct la backend-ul Spring
-    const res = await fetch("http://lmndev.com/speciality/create", {
+    const res = await fetch("https://lmndev.com/speciality/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
