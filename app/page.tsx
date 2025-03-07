@@ -1,49 +1,24 @@
 "use client"
 
-import { useEffect } from "react"
-import { Html5QrcodeScanner } from "html5-qrcode"
-import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
-import { QrCode, ScanLine } from 'lucide-react'
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function QRScannerPage() {
-  const router = useRouter()
+export default function HomePage() {
+  const router = useRouter();
 
   useEffect(() => {
-    // Verifică doar dacă există tableId și redirecționează
-    const existingTableId = sessionStorage.getItem("tableId")
-    if (existingTableId) {
-      router.replace("/menu") // folosim replace în loc de push
-      return
+    // Preia query string-ul din URL
+    const params = new URLSearchParams(window.location.search);
+    const tableId = params.get("tableId");
+
+    // Dacă există un tableId, salvează-l în sessionStorage
+    if (tableId) {
+      sessionStorage.setItem("tableId", tableId);
+      // Poți face și o redirecționare dacă este necesar:
+       router.replace("/menu");
     }
-
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        rememberLastUsedCamera: true,
-        aspectRatio: 1,
-        showTorchButtonIfSupported: true,
-        videoConstraints: {
-          facingMode: { ideal: "environment" }
-        }
-      },
-      false
-    )
-
-    scanner.render((decodedText) => {
-      sessionStorage.setItem("tableId", decodedText)
-      scanner.clear()
-      router.replace("/menu") // folosim replace în loc de push
-    }, (error) => {
-      console.warn(error)
-    })
-
-    return () => {
-      scanner.clear()
-    }
-  }, [router])
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 flex flex-col items-center justify-center p-4">
