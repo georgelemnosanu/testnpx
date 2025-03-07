@@ -2,7 +2,7 @@
 import { useCart } from "@/app/context/cart-context"
 import { toast } from "sonner"
 
-const API_URL = "http://lmndev.com/command/create" // Schimbă cu URL-ul corect
+const API_URL = "https://lmndev.com/command/create" 
 
 /**
  * Custom hook pentru trimiterea comenzilor la backend.
