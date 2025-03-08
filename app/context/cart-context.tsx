@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useReducer, useEffect,useCallback, type ReactNode } from "react"
+import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from "react"
 
 interface CartItem {
   id: number
@@ -32,25 +32,25 @@ interface CartState {
 }
 
 interface MenuItem {
-  id: number;
-  name: string;
-  price: number;
+  id: number
+  name: string
+  price: number
 }
 
 interface CommandMenuItem {
-  id: number;
-  menuItem: MenuItem;
-  quantity: number;
-  additionalNotes?: string | null;
+  id: number
+  menuItem: MenuItem
+  quantity: number
+  additionalNotes?: string | null
 }
 
 interface Command {
-  id: number;
+  id: number
   table: {
-    id: number;
-    tableName: string;
-  };
-  menuItemsWithQuantities: CommandMenuItem[];
+    id: number
+    tableName: string
+  }
+  menuItemsWithQuantities: CommandMenuItem[]
 }
 
 type CartAction =
@@ -66,6 +66,7 @@ type CartAction =
   | { type: "SET_TABLE_ID"; payload: string }
   | { type: "SET_USER_ID"; payload: string }
   | { type: "SET_TABLE_ORDERS"; payload: Order[] }
+  | { type: "SET_BILL_REQUESTED"; payload: boolean }
 
 const CartContext = createContext<{
   state: CartState
@@ -210,6 +211,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         userId: state.userId,
       }
       break
+    case "SET_BILL_REQUESTED":
+      newState = {
+        ...state,
+        isTableActive: !action.payload,
+      }
+      break
     default:
       return state
   }
@@ -340,22 +347,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Funcție pentru a prelua comenzile mesei
   const fetchTableOrders = useCallback(async () => {
     if (!state.tableId) {
-      console.log("Nu se poate face fetch la comenzi: tableId lipsește");
-      return;
+      console.log("Nu se poate face fetch la comenzi: tableId lipsește")
+      return
     }
-  
+
     try {
-      console.log(`Fetching orders for table: ${state.tableId}`);
-  
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/table/${state.tableId}`);
-      if (!response.ok) throw new Error("Eroare la preluarea comenzilor");
-  
-      const orders: Command[] = await response.json();
-  
+      console.log(`Fetching orders for table: ${state.tableId}`)
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/table/${state.tableId}`)
+      if (!response.ok) throw new Error("Eroare la preluarea comenzilor")
+
+      const data = await response.json()
+
+      // Check if bill has been requested
+      if (data.billRequested && state.isTableActive) {
+        dispatch({ type: "SET_BILL_REQUESTED", payload: true })
+      }
+
+      // Process orders
+      const orders: Command[] = data.orders || []
+
       const formattedOrders = orders.map((command) => ({
         id: command.id,
-        tableId: String(command.table.id), // Convertim numărul la string
-        timestamp: Date.now(), // Folosim timestamp-ul actual dacă API-ul nu furnizează unul
+        tableId: String(command.table.id),
+        timestamp: Date.now(),
         items: command.menuItemsWithQuantities.map((menuItem) => ({
           id: menuItem.menuItem.id,
           name: menuItem.menuItem.name,
@@ -363,18 +378,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
           quantity: menuItem.quantity,
           notes: menuItem.additionalNotes || "",
         })),
-        total: command.menuItemsWithQuantities.reduce(
-          (sum, item) => sum + item.menuItem.price * item.quantity,
-          0
-        ),
-      }));
-  
-      dispatch({ type: "SET_TABLE_ORDERS", payload: formattedOrders });
-      console.log("Comenzile mesei au fost încărcate:", formattedOrders);
+        total: command.menuItemsWithQuantities.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0),
+      }))
+
+      dispatch({ type: "SET_TABLE_ORDERS", payload: formattedOrders })
+      console.log("Comenzile mesei au fost încărcate:", formattedOrders)
     } catch (error) {
-      console.error("Eroare la preluarea comenzilor mesei:", error);
+      console.error("Eroare la preluarea comenzilor mesei:", error)
     }
-  }, [state.tableId, dispatch]);
+  }, [state.tableId, state.isTableActive, dispatch])
 
   // Preia comenzile mesei la inițializare și când se schimbă tableId
   useEffect(() => {

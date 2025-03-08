@@ -5,7 +5,7 @@ import { useCart } from "@/app/context/cart-context"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus, Minus, Trash2, Receipt, Clock, ChevronDown, CreditCard, Wallet, Users, User, Check } from "lucide-react"
+import { Plus, Minus, Trash2, Receipt, Clock, ChevronDown, CreditCard, Wallet, Users, User } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,19 +47,38 @@ export function Cart() {
     await sendOrder()
   }
 
-  const handleRequestBill = () => {
+  const handleRequestBill = async () => {
     setShowPaymentDialog(true)
   }
 
-  const confirmBillRequest = () => {
-    dispatch({ type: "REQUEST_BILL" })
-    setBillRequestTime(Date.now())
-    setIsOpen(false)
-    setShowPaymentDialog(false)
-    toast.success(`Nota de plată a fost cerută - Plată cu ${paymentMethod === "cash" ? "numerar" : "card"}`)
-    toast.message("Masa va fi resetată în 5 minute", {
-      icon: <Clock className="h-4 w-4" />,
-    })
+  const confirmBillRequest = async () => {
+    try {
+      // Call the backend API to request the bill
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/requestBill/${state.tableId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Eroare la cererea notei de plată")
+      }
+
+      // Update local state
+      dispatch({ type: "REQUEST_BILL" })
+      setBillRequestTime(Date.now())
+      setIsOpen(false)
+      setShowPaymentDialog(false)
+
+      toast.success(`Nota de plată a fost cerută - Plată cu ${paymentMethod === "cash" ? "numerar" : "card"}`)
+      toast.message("Masa va fi resetată în 30 secunde", {
+        icon: <Clock className="h-4 w-4" />,
+      })
+    } catch (error) {
+      console.error("Eroare la cererea notei:", error)
+      toast.error("A apărut o eroare la cererea notei")
+    }
   }
 
   // Calculează totalul pentru comenzile proprii
@@ -95,14 +114,44 @@ export function Cart() {
     }
   }, [activeTab, isOpen, state.tableId, fetchTableOrders, dispatch])
 
+  // Check for bill requests when fetching table data
+  useEffect(() => {
+    const checkBillStatus = async () => {
+      if (!state.tableId) return
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/table/${state.tableId}`)
+        if (!response.ok) throw new Error("Eroare la verificarea statusului notei")
+
+        const data = await response.json()
+
+        // If billRequested is true and the table is still active, update the state
+        if (data.billRequested && state.isTableActive) {
+          dispatch({ type: "REQUEST_BILL" })
+          setBillRequestTime(Date.now())
+          toast.info("Nota de plată a fost cerută de un alt client la masă")
+        }
+      } catch (error) {
+        console.error("Eroare la verificarea statusului notei:", error)
+      }
+    }
+
+    // Set up polling to check bill status every 10 seconds
+    const intervalId = setInterval(checkBillStatus, 10000)
+
+    // Initial check
+    checkBillStatus()
+
+    return () => clearInterval(intervalId)
+  }, [state.tableId, state.isTableActive, dispatch])
+
   useEffect(() => {
     if (billRequestTime) {
       console.log("Bill request time set, starting 30-sec timer...")
       const timer = setTimeout(async () => {
         console.log("Timer elapsed, calling close command endpoint...")
         try {
-          const storedTableId = sessionStorage.getItem("tableId")
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/close/${storedTableId}`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/close/${state.tableId}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -112,28 +161,27 @@ export function Cart() {
             throw new Error("Eroare la actualizarea statusului comenzilor")
           }
           toast.success("Comenzile au fost închise cu succes!")
+          dispatch({ type: "RESET_TABLE" })
+          setBillRequestTime(null)
+          toast.success("Masa a fost resetată")
         } catch (error) {
           console.error("Eroare la închiderea comenzii:", error)
           toast.error("A apărut o eroare la închiderea comenzii")
         }
-        dispatch({ type: "RESET_TABLE" })
-        setBillRequestTime(null)
-        toast.success("Masa a fost resetată")
-      }, 30000) // 30000 ms = 30 secunde pentru testare
+      }, 30000) // 30000 ms = 30 secunde
       return () => clearTimeout(timer)
     }
-  }, [billRequestTime, dispatch])
+  }, [billRequestTime, dispatch, state.tableId])
 
   // Modificăm BillRequestBanner pentru a-l face mai vizibil și mai sus
   const BillRequestBanner = () => (
-    <div className="mb-4 rounded-lg bg-primary/10 p-3 text-center">
-      <div className="flex justify-center mb-1">
-        <div className="rounded-full bg-primary/20 p-2">
-          <Receipt className="h-5 w-5 text-primary" />
+    <div className="rounded-lg bg-white p-3 text-center border border-black shadow-lg">
+      <div className="flex justify-center mb-2">
+        <div className="rounded-full bg-black p-2">
+          <Receipt className="h-4 w-4 text-white" />
         </div>
       </div>
-      <p className="font-medium">Nota de plată a fost cerută!</p>
-      <p className="text-xs text-muted-foreground mt-1">Vă mulțumim pentru vizită.</p>
+      <p className="font-medium text-lg text-black">Nota de plată a fost cerută!</p>
     </div>
   )
 
@@ -174,7 +222,7 @@ export function Cart() {
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as any)}
         >
-          <TabsList className="grid w-full grid-cols-2 mb-4 h-10 relative">
+          <TabsList className="grid w-full grid-cols-2 mb-1 h-10 relative">
             <TabsTrigger value="my-order" className="flex items-center gap-2 h-full">
               <User className="h-4 w-4" />
               Comanda mea
@@ -186,7 +234,7 @@ export function Cart() {
           </TabsList>
 
           {/* Tab pentru comanda proprie */}
-          <TabsContent value="my-order" className="flex-1 flex flex-col">
+          <TabsContent value="my-order" className="flex-1 flex flex-col data-[state=inactive]:hidden">
             {/* Order History Section */}
             {state.orderHistory.length > 0 && (
               <div className="mb-4 space-y-2 border-b pb-4">
@@ -204,39 +252,46 @@ export function Cart() {
                   </Button>
                 </div>
                 {isHistoryOpen && (
-                  <div className="space-y-3">
-                    {state.orderHistory.map((order, orderIndex) => (
-                      <div key={orderIndex} className="rounded-lg border bg-muted/50 p-4 text-sm">
-                        <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            Comanda {orderIndex + 1} -{" "}
-                            {formatDistanceToNow(order.timestamp, {
-                              addSuffix: true,
-                              locale: ro,
-                            })}
-                          </span>
-                        </div>
-                        {order.items.map((item, itemIndex) => (
-                          <div key={itemIndex} className="py-1">
-                            <div className="flex justify-between">
-                              <span>
-                                {item.name} x{item.quantity}
-                              </span>
-                              <span className="font-medium">{item.price * item.quantity} lei</span>
-                            </div>
-                            {item.notes && (
-                              <div className="text-xs text-muted-foreground mt-1 ml-4">Note: {item.notes}</div>
-                            )}
+                  <ScrollArea className="h-[300px] pr-4">
+                    <div className="space-y-3">
+                      {state.orderHistory.map((order, orderIndex) => (
+                        <div key={orderIndex} className="rounded-lg border bg-muted/50 p-4 text-sm">
+                          <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              Comanda {orderIndex + 1} -{" "}
+                              {formatDistanceToNow(order.timestamp, {
+                                addSuffix: true,
+                                locale: ro,
+                              })}
+                            </span>
                           </div>
-                        ))}
-                        <div className="mt-2 border-t pt-2 text-right font-medium">
-                          Total comandă: {order.total} lei
+                          {order.items.map((item, itemIndex) => (
+                            <div key={itemIndex} className="py-1">
+                              <div className="flex justify-between">
+                                <span>
+                                  {item.name} x{item.quantity}
+                                </span>
+                                <span className="font-medium">{item.price * item.quantity} lei</span>
+                              </div>
+                              {item.notes && (
+                                <div className="text-xs text-muted-foreground mt-1 ml-4">Note: {item.notes}</div>
+                              )}
+                            </div>
+                          ))}
+                          <div className="mt-2 border-t pt-2 text-right font-medium">
+                            Total comandă: {order.total} lei
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
+              </div>
+            )}
+            {!state.isTableActive && (
+              <div className="mb-6">
+                <BillRequestBanner />
               </div>
             )}
 
@@ -313,6 +368,11 @@ export function Cart() {
                     </div>
                   </ScrollArea>
                 </div>
+                {!state.isTableActive && (
+                  <div className="mb-6">
+                    <BillRequestBanner />
+                  </div>
+                )}
                 <div className="border-t pt-4 mt-4 bg-background sticky bottom-0">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total comandă curentă:</span>
@@ -341,11 +401,11 @@ export function Cart() {
           </TabsContent>
 
           {/* Tab pentru comanda mesei */}
-          <TabsContent value="table-order" className="flex-1 flex flex-col">
+          <TabsContent value="table-order" className="flex-1 flex flex-col pt-0 data-[state=inactive]:hidden">
             {/* Container pentru comenzi cu scroll */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden mt-0">
               <ScrollArea className="h-[calc(100vh-450px)] sm:h-[350px]">
-                <div className="space-y-4 py-4">
+                <div className="space-y-4">
                   {state.tableOrders.length === 0 ? (
                     <div className="flex flex-1 items-center justify-center py-8">
                       <p className="text-muted-foreground">Nu există comenzi pentru această masă</p>
@@ -391,6 +451,13 @@ export function Cart() {
               </ScrollArea>
             </div>
 
+            {/* Afișăm banner-ul de notificare pentru nota de plată dacă masa nu este activă */}
+            {!state.isTableActive && (
+              <div className="mt-4 mb-6">
+                <BillRequestBanner />
+              </div>
+            )}
+
             {/* Partea fixă - totaluri și buton */}
             <div className="border-t bg-background pt-4 mt-4">
               <div className="flex justify-between text-lg font-semibold">
@@ -404,9 +471,6 @@ export function Cart() {
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Afișăm banner-ul de notificare pentru nota de plată dacă masa nu este activă */}
-        {!state.isTableActive && <BillRequestBanner />}
 
         {/* Butonul de cerere notă în SheetFooter - vizibil în ambele taburi */}
         <SheetFooter className="mt-4 pt-4 border-t">
@@ -467,8 +531,12 @@ export function Cart() {
               </AlertDialogContent>
             </AlertDialog>
           ) : (
-            <Button variant="outline" className="w-full bg-primary/10 text-primary" disabled>
-              <Check className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              className="w-full bg-white border-black text-black font-medium shadow-sm disabled:opacity-100 disabled:cursor-not-allowed h-12"
+              disabled
+            >
+              <Receipt className="mr-2 h-4 w-4" />
               Nota cerută ({getTableOrdersTotal()} lei)
             </Button>
           )}
