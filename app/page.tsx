@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useCart } from "./context/cart-context"
 import { toast } from "sonner"
@@ -11,8 +10,12 @@ export default function HomePage() {
   const router = useRouter()
   const { dispatch, state } = useCart()
   const [loading, setLoading] = useState(true)
+  const [hasTableId, setHasTableId] = useState(false)
 
   useEffect(() => {
+    // Verificăm dacă suntem în browser
+    if (typeof window === "undefined") return
+
     // Preia query string-ul din URL
     const params = new URLSearchParams(window.location.search)
     const tableId = params.get("tableId")
@@ -20,6 +23,7 @@ export default function HomePage() {
     if (tableId) {
       // Salvăm tableId-ul în sessionStorage
       sessionStorage.setItem("tableId", tableId)
+      setHasTableId(true)
 
       // Setăm tableId-ul în context
       dispatch({ type: "SET_TABLE_ID", payload: tableId })
@@ -37,16 +41,21 @@ export default function HomePage() {
 
       if (!storedTableId) {
         // Dacă nu avem tableId, afișăm un mesaj
+        setHasTableId(false)
         toast.error("Nu ești conectat la o masă", {
           description: "Te rugăm să scanezi codul QR de pe masă",
           duration: 5000,
         })
       } else {
         // Dacă avem tableId în sessionStorage, îl setăm în context
+        setHasTableId(true)
         dispatch({ type: "SET_TABLE_ID", payload: storedTableId })
 
         // Verificăm starea mesei la server pentru a ne asigura că este încă activă
         checkTableStatus(storedTableId)
+
+        // Redirecționare către meniu și pentru cazul când tableId este în sessionStorage
+        router.replace("/menu")
       }
     }
 
@@ -76,8 +85,14 @@ export default function HomePage() {
     }
   }
 
-  // Verificăm dacă avem un tableId salvat
-  const hasTableId = typeof window !== "undefined" ? sessionStorage.getItem("tableId") : null
+  // Afișăm un loader în timpul încărcării
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 flex flex-col items-center justify-center p-4">
@@ -91,7 +106,7 @@ export default function HomePage() {
       <div className="z-10 flex flex-col items-center">
         <h1 className="text-4xl font-bold text-white mb-8 text-center">Restaurant LMN</h1>
 
-        {!hasTableId ? (
+        {!hasTableId && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 mb-8 max-w-md text-center">
             <h2 className="text-xl font-semibold text-red-400 mb-4">Nu ești conectat la o masă</h2>
             <p className="text-white mb-4">Pentru a comanda, te rugăm să scanezi codul QR de pe masă.</p>
@@ -102,18 +117,7 @@ export default function HomePage() {
             </div>
             <p className="text-white mt-4">Deschide camera telefonului și scanează codul QR de pe masă.</p>
           </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 max-w-4xl w-full">
-            <Link href="/restaurant" className="w-full">
-              <Button className="w-full h-32 text-xl bg-yellow-600 hover:bg-yellow-700">Meniu Restaurant</Button>
-            </Link>
-            <Link href="/bar" className="w-full">
-              <Button className="w-full h-32 text-xl bg-purple-600 hover:bg-purple-700">Meniu Bar</Button>
-            </Link>
-          </div>
         )}
-
-        {/* Buton pentru resetarea manuală a coșului - util pentru testare */}
 
       </div>
 
