@@ -68,7 +68,7 @@ export default function BarMenu() {
       <header className="sticky top-0 z-10 bg-[#1a1a1a] p-4 shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/">
+            <Link href="/menu">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:text-yellow-500">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
