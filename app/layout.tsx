@@ -1,9 +1,10 @@
 import type React from "react"
 import "./globals.css"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter } from 'next/font/google'
 import { CartProvider } from "./context/cart-context"
 import { Cart } from "./components/cart"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,10 +27,17 @@ export default function RootLayout({
               <Cart />
             </header>
             {children}
+            <Toaster 
+  position="top-center"
+  toastOptions={{
+    style: { marginTop: '7rem' },
+    duration: 2000, 
+  }}
+  richColors 
+/>
           </div>
         </CartProvider>
       </body>
     </html>
   )
 }
-

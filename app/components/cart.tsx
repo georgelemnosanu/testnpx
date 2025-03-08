@@ -72,9 +72,6 @@ export function Cart() {
       setShowPaymentDialog(false)
 
       toast.success(`Nota de plată a fost cerută - Plată cu ${paymentMethod === "cash" ? "numerar" : "card"}`)
-      toast.message("Masa va fi resetată în 30 secunde", {
-        icon: <Clock className="h-4 w-4" />,
-      })
     } catch (error) {
       console.error("Eroare la cererea notei:", error)
       toast.error("A apărut o eroare la cererea notei")
@@ -160,10 +157,8 @@ export function Cart() {
           if (!response.ok) {
             throw new Error("Eroare la actualizarea statusului comenzilor")
           }
-          toast.success("Comenzile au fost închise cu succes!")
           dispatch({ type: "RESET_TABLE" })
           setBillRequestTime(null)
-          toast.success("Masa a fost resetată")
         } catch (error) {
           console.error("Eroare la închiderea comenzii:", error)
           toast.error("A apărut o eroare la închiderea comenzii")

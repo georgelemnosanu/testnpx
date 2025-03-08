@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { BellRing, ChevronRight, Minus, Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 import type { MenuItem, MenuSection as MenuSectionType } from "@/app/bar/types"
 
 interface MenuSectionProps {
@@ -27,18 +28,34 @@ export function MenuSection({ section }: MenuSectionProps) {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({})
   const [notes, setNotes] = useState<{ [key: number]: string }>({})
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const addToOrder = (item: MenuItem) => {
+    const quantity = quantities[item.id] || 1
+
     dispatch({
       type: "ADD_ITEM",
       payload: {
         id: item.id,
         name: item.name,
         price: item.price,
-        quantity: quantities[item.id] || 1,
+        quantity: quantity,
         notes: notes[item.id],
       },
     })
+
+    // Show success toast - make sure this is working
+    console.log("Showing toast notification")
+    toast.success(`${item.name} adăugat în coș`, {
+      description: `Cantitate: ${quantity}`,
+    })
+
+    // Close dialog after adding to cart
+    setDialogOpen(false)
+
+    // Reset quantities and notes for this item
+    setQuantities((prev) => ({ ...prev, [item.id]: 1 }))
+    setNotes((prev) => ({ ...prev, [item.id]: "" }))
   }
 
   const updateQuantity = (id: number, delta: number) => {
@@ -50,7 +67,11 @@ export function MenuSection({ section }: MenuSectionProps) {
 
   const callWaiter = () => {
     // Here you would implement the waiter calling functionality
-    console.log("Waiter called")
+    console.log("Calling waiter")
+    toast.success("Chelnerul a fost chemat", {
+      description: "Un ospătar va veni la masa dvs. în curând",
+    })
+    setDialogOpen(false)
   }
 
   return (
@@ -59,9 +80,25 @@ export function MenuSection({ section }: MenuSectionProps) {
       <div className="grid gap-4">
         {section.items.map((item) => (
           <Card key={item.id} className="overflow-hidden">
-            <Dialog>
+            <Dialog
+              open={dialogOpen && selectedItem?.id === item.id}
+              onOpenChange={(open) => {
+                setDialogOpen(open)
+                if (open) {
+                  setSelectedItem(item)
+                } else {
+                  setSelectedItem(null)
+                }
+              }}
+            >
               <DialogTrigger asChild>
-                <div className="cursor-pointer">
+                <div
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setSelectedItem(item)
+                    setDialogOpen(true)
+                  }}
+                >
                   <div className="flex overflow-hidden">
                     <Image
                       src={item.image || "/placeholder.svg"}
@@ -128,7 +165,10 @@ export function MenuSection({ section }: MenuSectionProps) {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, -1)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            updateQuantity(item.id, -1)
+                          }}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -148,7 +188,10 @@ export function MenuSection({ section }: MenuSectionProps) {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, 1)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            updateQuantity(item.id, 1)
+                          }}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -156,7 +199,13 @@ export function MenuSection({ section }: MenuSectionProps) {
                     </div>
                   </div>
                   <div className="flex flex-col gap-3">
-                    <Button className="w-full" onClick={() => addToOrder(item)}>
+                    <Button
+                      className="w-full h-12"
+                      onClick={() => {
+                        console.log("Add to order button clicked")
+                        addToOrder(item)
+                      }}
+                    >
                       Adaugă la comandă ({item.price * (quantities[item.id] || 1)} lei)
                     </Button>
                     <Button variant="outline" className="w-full" onClick={callWaiter}>
