@@ -17,24 +17,21 @@ export default function BarMenu() {
   useEffect(() => {
     async function fetchMenuItems() {
       try {
-        // Folosim endpoint-ul pentru băuturi (speciality class 2)
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewMenuItemsBySpecialityClass/2`)
         if (!response.ok) {
           throw new Error("Eroare la încărcarea meniului de băuturi")
         }
 
-        // Obținem un array plat de MenuItem
         const data: MenuItem[] = await response.json()
 
-        // Normalizează datele și asigură-te că avem toate proprietățile necesare
         const normalizedData: MenuItem[] = data.map((item) => ({
           ...item,
           image: item.image || "/placeholder.svg",
-          category: item.category || "Altele", // Asigură-te că avem întotdeauna o categorie
-          ingredients: item.ingredients || [], // Asigură-te că avem întotdeauna un array de ingrediente
+          category: item.category || "Altele", 
+          ingredients: item.ingredients || [], 
         }))
 
-        // Grupăm produsele după câmpul "category"
+       
         const groups: { [key: string]: MenuItem[] } = {}
         normalizedData.forEach((item) => {
           if (!groups[item.category]) {
@@ -43,13 +40,11 @@ export default function BarMenu() {
           groups[item.category].push(item)
         })
 
-        // Convertim obiectul în array de MenuSection
         const groupedArray: MenuSectionType[] = Object.keys(groups).map((category) => ({
           title: category,
           items: groups[category],
         }))
 
-        // Sortăm categoriile alfabetic pentru o experiență mai bună
         groupedArray.sort((a, b) => a.title.localeCompare(b.title))
 
         setGroupedItems(groupedArray)
@@ -81,7 +76,6 @@ export default function BarMenu() {
 
       <div className="p-4">
         {loading ? (
-          // Skeleton loader pentru o experiență mai bună
           <div className="space-y-8">
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-4">

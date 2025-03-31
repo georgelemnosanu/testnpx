@@ -53,7 +53,6 @@ export function Cart() {
 
   const confirmBillRequest = async () => {
     try {
-      // Call the backend API to request the bill
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/requestBill/${state.tableId}`, {
         method: "PUT",
         headers: {
@@ -65,7 +64,6 @@ export function Cart() {
         throw new Error("Eroare la cererea notei de plată")
       }
 
-      // Update local state
       dispatch({ type: "REQUEST_BILL" })
       setBillRequestTime(Date.now())
       setIsOpen(false)
@@ -78,40 +76,31 @@ export function Cart() {
     }
   }
 
-  // Calculează totalul pentru comenzile proprii
   const getMyOrdersTotal = () => {
     const currentTotal = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
     const historyTotal = state.orderHistory.reduce((sum, order) => sum + order.total, 0)
     return currentTotal + historyTotal
   }
 
-  // Calculează totalul pentru toate comenzile de la masă
   const getTableOrdersTotal = () => {
     return state.tableOrders.reduce((sum, order) => sum + order.total, 0)
   }
 
-  // Reîmprospătează comenzile mesei când se deschide cart-ul
-  // Efect pentru a prelua comenzile mesei când se deschide cart-ul
   useEffect(() => {
-    // 2) Dacă tableId nu e setat, îl luăm din sessionStorage
     if (!state.tableId) {
-      const storedTableId = sessionStorage.getItem("tableId") // <-- Cheia trebuie să fie "tableId"
+      const storedTableId = sessionStorage.getItem("tableId") 
       if (storedTableId) {
-        // Setăm tableId în context
         dispatch({ type: "SET_TABLE_ID", payload: storedTableId })
       }
-      // După ce îl setăm, componenta se va re-randa, iar la următorul pas vom avea deja state.tableId
       return
     }
 
-    // 3) Dacă avem tableId, isOpen e true, și activeTab e "table-order", facem fetch
     if (isOpen && activeTab === "table-order" && state.tableId) {
       console.log("Tab schimbat la comenzile mesei, se face fetch")
       fetchTableOrders()
     }
   }, [activeTab, isOpen, state.tableId, fetchTableOrders, dispatch])
 
-  // Check for bill requests when fetching table data
   useEffect(() => {
     const checkBillStatus = async () => {
       if (!state.tableId) return
@@ -122,7 +111,6 @@ export function Cart() {
 
         const data = await response.json()
 
-        // If billRequested is true and the table is still active, update the state
         if (data.billRequested && state.isTableActive) {
           dispatch({ type: "REQUEST_BILL" })
           setBillRequestTime(Date.now())
@@ -133,10 +121,8 @@ export function Cart() {
       }
     }
 
-    // Set up polling to check bill status every 10 seconds
     const intervalId = setInterval(checkBillStatus, 10000)
 
-    // Initial check
     checkBillStatus()
 
     return () => clearInterval(intervalId)
@@ -163,12 +149,12 @@ export function Cart() {
           console.error("Eroare la închiderea comenzii:", error)
           toast.error("A apărut o eroare la închiderea comenzii")
         }
-      }, 30000) // 30000 ms = 30 secunde
+      }, 30000) 
       return () => clearTimeout(timer)
     }
   }, [billRequestTime, dispatch, state.tableId])
 
-  // Modificăm BillRequestBanner pentru a-l face mai vizibil și mai sus
+ 
   const BillRequestBanner = () => (
     <div className="rounded-lg bg-white p-3 text-center border border-black shadow-lg">
       <div className="flex justify-center mb-2">

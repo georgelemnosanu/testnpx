@@ -12,10 +12,9 @@ export default function MenuPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Verifică doar dacă NU există tableId
     const tableId = sessionStorage.getItem("tableId")
     if (!tableId) {
-      router.replace("/") // folosim replace în loc de push
+      router.replace("/") 
     }
   }, [router])
 

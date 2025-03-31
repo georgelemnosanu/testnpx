@@ -36,15 +36,10 @@ export default function OrderHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "cancelled">("all")
   const [typeFilter, setTypeFilter] = useState<"all" | "food" | "drinks" | "mixed">("all")
 
-  // Fetch order history
   useEffect(() => {
     const fetchOrderHistory = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // const response = await fetch("/api/orders/history")
-        // const data = await response.json()
-
-        // For demo purposes, we'll use mock data
+       
         const mockOrders: Order[] = [
           {
             id: 1,
@@ -53,7 +48,7 @@ export default function OrderHistoryPage() {
               { id: 101, name: "Pizza Margherita", quantity: 2, price: 35, notes: "Fără ceapă" },
               { id: 102, name: "Paste Carbonara", quantity: 1, price: 32 },
             ],
-            timestamp: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
+            timestamp: Date.now() - 1000 * 60 * 60 * 2, 
             status: "completed",
             type: "food",
           },
@@ -64,7 +59,7 @@ export default function OrderHistoryPage() {
               { id: 201, name: "Mojito", quantity: 3, price: 25 },
               { id: 202, name: "Aperol Spritz", quantity: 2, price: 28 },
             ],
-            timestamp: Date.now() - 1000 * 60 * 60 * 3, // 3 hours ago
+            timestamp: Date.now() - 1000 * 60 * 60 * 3, 
             status: "completed",
             type: "drinks",
           },
@@ -75,7 +70,7 @@ export default function OrderHistoryPage() {
               { id: 301, name: "Burger de vită", quantity: 1, price: 38 },
               { id: 302, name: "Cola", quantity: 1, price: 8 },
             ],
-            timestamp: Date.now() - 1000 * 60 * 60 * 5, // 5 hours ago
+            timestamp: Date.now() - 1000 * 60 * 60 * 5, 
             status: "cancelled",
             type: "mixed",
           },
@@ -93,7 +88,6 @@ export default function OrderHistoryPage() {
     fetchOrderHistory()
   }, [])
 
-  // Toggle order expanded state
   const toggleOrderExpanded = (orderId: number) => {
     setExpandedOrders((prev) => ({
       ...prev,
@@ -101,28 +95,22 @@ export default function OrderHistoryPage() {
     }))
   }
 
-  // Filter and search orders
   const filteredOrders = orders.filter((order) => {
-    // Apply status filter
     if (statusFilter !== "all" && order.status !== statusFilter) {
       return false
     }
 
-    // Apply type filter
     if (typeFilter !== "all" && order.type !== typeFilter) {
       return false
     }
 
-    // Apply search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
 
-      // Search by order ID or table ID
       if (order.id.toString().includes(query) || order.tableId.toLowerCase().includes(query)) {
         return true
       }
 
-      // Search in items
       return order.items.some(
         (item) => item.name.toLowerCase().includes(query) || (item.notes && item.notes.toLowerCase().includes(query)),
       )
@@ -131,7 +119,6 @@ export default function OrderHistoryPage() {
     return true
   })
 
-  // Get status badge
   const getStatusBadge = (status: "completed" | "cancelled") => {
     switch (status) {
       case "completed":
@@ -145,7 +132,6 @@ export default function OrderHistoryPage() {
     }
   }
 
-  // Calculate order total
   const calculateOrderTotal = (items: OrderItem[]) => {
     return items.reduce((total, item) => total + item.price * item.quantity, 0)
   }

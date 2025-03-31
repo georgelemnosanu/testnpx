@@ -152,7 +152,6 @@ export default function CategoriesPage() {
                         variant="outline"
                         size="icon"
                         onClick={() => {
-                          // Add edit functionality
                         }}
                       >
                         <Pencil className="h-4 w-4" />
@@ -161,7 +160,6 @@ export default function CategoriesPage() {
                         variant="destructive"
                         size="icon"
                         onClick={() => {
-                          // Add delete functionality
                         }}
                       >
                         <Trash2 className="h-4 w-4" />

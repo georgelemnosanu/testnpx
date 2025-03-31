@@ -5,10 +5,8 @@ import { NextResponse } from "next/server"
  */
 export async function GET() {
   try {
-    // Apelezi backend-ul Spring
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/speciality/allSpeciality`, {
       method: "GET",
-      // Poți adăuga HEADERS dacă e nevoie, ex. Authorization
     })
 
     if (!res.ok) {
@@ -16,7 +14,6 @@ export async function GET() {
     }
 
     const data = await res.json()
-    // data va fi un array de Speciality
     return NextResponse.json(data)
   } catch (error) {
     console.error("Error fetching categories from Spring:", error)
@@ -27,20 +24,17 @@ export async function GET() {
   }
 }
 
-/**
- * Creează o categorie nouă (specialitate)
- */
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Trimite direct la backend-ul Spring
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/speciality/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body), // asumi că Spring așteaptă un JSON cu { name, description, ... }
+      body: JSON.stringify(body), 
     })
 
     if (!res.ok) {
@@ -49,7 +43,6 @@ export async function POST(request: Request) {
     }
 
     const createdCategory = await res.json()
-    // Returnezi JSON-ul creat
     return NextResponse.json(createdCategory)
   } catch (error) {
     console.error("Error creating category:", error)

@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
     domains: ['images.unsplash.com', 'sjc.microlink.io'],
   },
   eslint: {
-    // Dezactivează ESLint în timpul build-ului
     ignoreDuringBuilds: true,
   },
 };

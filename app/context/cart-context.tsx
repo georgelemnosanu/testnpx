@@ -74,10 +74,8 @@ const CartContext = createContext<{
   fetchTableOrders: () => Promise<void>
 } | null>(null)
 
-// Verifică dacă codul rulează în browser
 const isBrowser = typeof window !== "undefined"
 
-// Modificăm cartReducer pentru a adăuga persistența datelor
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   let newState: CartState
 
@@ -221,7 +219,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return state
   }
 
-  // Salvăm starea în localStorage pentru persistență (doar în browser)
   if (isBrowser) {
     try {
       localStorage.setItem("cartState", JSON.stringify(newState))
@@ -233,19 +230,15 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
   return newState
 }
 
-// Generează un ID unic pentru utilizator
 function generateUserId() {
   return `user_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`
 }
 
-// Funcție pentru a valida și curăța datele încărcate din localStorage
 function sanitizeCartState(state: any): CartState {
-  // Verificăm dacă state este un obiect valid
   if (!state || typeof state !== "object") {
     return getDefaultCartState()
   }
 
-  // Curățăm orderHistory pentru a ne asigura că timestamp-urile sunt valide
   const sanitizedOrderHistory = Array.isArray(state.orderHistory)
     ? state.orderHistory.map((order: Partial<Order>) => ({
         ...order,
@@ -255,7 +248,6 @@ function sanitizeCartState(state: any): CartState {
       }))
     : []
 
-  // Curățăm tableOrders pentru a ne asigura că timestamp-urile sunt valide
   const sanitizedTableOrders = Array.isArray(state.tableOrders)
     ? state.tableOrders.map((order: Partial<Order>) => ({
         ...order,
@@ -265,20 +257,18 @@ function sanitizeCartState(state: any): CartState {
       }))
     : []
 
-  // Returnăm starea curățată
   return {
     items: Array.isArray(state.items) ? state.items : [],
     total: typeof state.total === "number" ? state.total : 0,
     orderHistory: sanitizedOrderHistory,
     tableOrders: sanitizedTableOrders,
     isOrderConfirmed: Boolean(state.isOrderConfirmed),
-    isTableActive: state.isTableActive !== false, // default true
+    isTableActive: state.isTableActive !== false,
     tableId: typeof state.tableId === "string" ? state.tableId : null,
     userId: typeof state.userId === "string" ? state.userId : null,
   }
 }
 
-// Funcție pentru a obține starea implicită
 function getDefaultCartState(): CartState {
   return {
     items: [],
@@ -292,11 +282,8 @@ function getDefaultCartState(): CartState {
   }
 }
 
-// Modificăm CartProvider pentru a încărca starea din localStorage
 export function CartProvider({ children }: { children: ReactNode }) {
-  // Încercăm să încărcăm starea din localStorage
   const loadInitialState = (): CartState => {
-    // Verificăm dacă suntem în browser
     if (!isBrowser) {
       return getDefaultCartState()
     }
@@ -311,13 +298,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.warn("Nu s-a putut încărca starea din localStorage:", error)
     }
 
-    // Starea implicită dacă nu există nimic salvat
     return getDefaultCartState()
   }
 
   const [state, dispatch] = useReducer(cartReducer, loadInitialState())
 
-  // Inițializează userId dacă nu există
   useEffect(() => {
     if (!state.userId && isBrowser) {
       let userId = localStorage.getItem("userId")
@@ -329,7 +314,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [state.userId])
 
-  // Inițializează tableId din sessionStorage
   useEffect(() => {
     if (!state.tableId && isBrowser) {
       const tableSession = sessionStorage.getItem("table_session")
@@ -344,7 +328,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [state.tableId])
 
-  // Funcție pentru a prelua comenzile mesei
   const fetchTableOrders = useCallback(async () => {
     if (!state.tableId) {
       console.log("Nu se poate face fetch la comenzi: tableId lipsește")
@@ -359,12 +342,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json()
 
-      // Check if bill has been requested
       if (data.billRequested && state.isTableActive) {
         dispatch({ type: "SET_BILL_REQUESTED", payload: true })
       }
 
-      // Process orders
       const orders: Command[] = data.orders || []
 
       const formattedOrders = orders.map((command) => ({
@@ -388,7 +369,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [state.tableId, state.isTableActive, dispatch])
 
-  // Preia comenzile mesei la inițializare și când se schimbă tableId
   useEffect(() => {
     if (state.tableId && isBrowser) {
       fetchTableOrders()

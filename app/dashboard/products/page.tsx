@@ -77,12 +77,10 @@ export default function ProductsPage() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        // Fetch categories
         const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/speciality/allSpeciality`)
         const categoriesData = await categoriesResponse.json()
         setCategories(categoriesData)
 
-        // Fetch menu items
         const itemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewAllMenuItems`)
         const itemsData = await itemsResponse.json()
         setItems(itemsData)
@@ -105,7 +103,6 @@ export default function ProductsPage() {
         image: file,
       }))
 
-      // Create preview URL
       const reader = new FileReader()
       reader.onloadend = () => {
         setImagePreview(reader.result as string)
@@ -140,12 +137,10 @@ export default function ProductsPage() {
 
       toast.success(selectedItem ? "Produsul a fost actualizat cu succes" : "Produsul a fost adăugat cu succes")
 
-      // Refresh the list
       const itemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewAllMenuItems`)
       const itemsData = await itemsResponse.json()
       setItems(itemsData)
 
-      // Reset form
       setIsAddDialogOpen(false)
       setImagePreview(null)
       setFormData({
@@ -175,7 +170,6 @@ export default function ProductsPage() {
 
       toast.success("Produsul a fost șters cu succes")
 
-      // Refresh the list
       const itemsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/menuItem/viewAllMenuItems`)
       const itemsData = await itemsResponse.json()
       setItems(itemsData)

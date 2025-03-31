@@ -10,7 +10,6 @@ import { formatDistanceToNow } from "date-fns"
 import { ro } from "date-fns/locale"
 import { toast } from "sonner"
 
-// Interfețe pentru datele primite de la API
 interface MenuItem {
   id: number
   name: string
@@ -19,7 +18,7 @@ interface MenuItem {
   speciality: {
     specialityClass: {
       id: number
-      name: string // "Mancare" sau "Bauturi"
+      name: string 
     }
   }
   category: string
@@ -42,7 +41,6 @@ interface ApiOrder {
   status: "PENDING" | "IN_PROGRESS" | "CLOSED"
 }
 
-// Interfețe pentru datele folosite în componenta noastră
 interface OrderItem {
   id: number
   name: string
@@ -68,7 +66,6 @@ export default function OrdersPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch orders from the API
   const fetchOrders = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/viewAllCommand`)
@@ -76,18 +73,16 @@ export default function OrdersPage() {
 
       const apiOrders: ApiOrder[] = await response.json()
 
-      // Transformăm datele din formatul API în formatul necesar componentei
       const transformedOrders: Order[] = apiOrders
-        .filter((order) => order.status !== "CLOSED") // Filtrăm doar comenzile active
+        .filter((order) => order.status !== "CLOSED") 
         .map((apiOrder) => {
-          // Determinăm tipul comenzii (Mancare sau Bauturi) bazat pe primul produs
-          // Dacă comanda are produse de ambele tipuri, o vom clasifica după primul produs
+     
           const orderType =
             apiOrder.menuItemsWithQuantities.length > 0
               ? (apiOrder.menuItemsWithQuantities[0].menuItem.speciality.specialityClass.name as "Mancare" | "Bauturi")
-              : "Mancare" // Default în caz că nu există produse
+              : "Mancare" 
 
-          // Transformăm produsele
+          
           const items: OrderItem[] = apiOrder.menuItemsWithQuantities.map((item) => ({
             id: item.id,
             name: item.menuItem.name,
@@ -100,13 +95,13 @@ export default function OrdersPage() {
             id: apiOrder.id,
             tableId: apiOrder.table.tableName,
             items: items,
-            timestamp: Date.now() - Math.floor(Math.random() * 1000 * 60 * 10), // Simulăm un timestamp
+            timestamp: Date.now() - Math.floor(Math.random() * 1000 * 60 * 10), 
             status: apiOrder.status,
             type: orderType,
           }
         })
 
-      // Verificăm dacă au apărut comenzi noi pentru a reda sunetul
+     
       if (orders.length > 0 && transformedOrders.length > orders.length) {
         playNotificationSound()
       }
@@ -120,7 +115,6 @@ export default function OrdersPage() {
     }
   }
 
-  // Initialize audio element
   useEffect(() => {
     audioRef.current = new Audio("/notification.mp3")
     return () => {
@@ -131,22 +125,21 @@ export default function OrdersPage() {
     }
   }, [])
 
-  // Set up polling for new orders
   useEffect(() => {
     fetchOrders()
 
     pollingIntervalRef.current = setInterval(() => {
       fetchOrders()
-    }, 10000) // Poll every 10 seconds
+    }, 10000) 
 
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current)
       }
     }
-  }, []) // Removed fetchOrders from dependencies
+  }, []) 
 
-  // Play notification sound
+  
   const playNotificationSound = () => {
     if (soundEnabled && audioRef.current) {
       audioRef.current.play().catch((err) => {
@@ -155,13 +148,12 @@ export default function OrdersPage() {
     }
   }
 
-  // Toggle sound notifications
+ 
   const toggleSound = () => {
     setSoundEnabled(!soundEnabled)
     toast.success(soundEnabled ? "Notificări sonore dezactivate" : "Notificări sonore activate")
   }
 
-  // Update order status via API PATCH
   const updateOrderStatus = async (orderId: number, status: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/${orderId}`, {
@@ -176,12 +168,12 @@ export default function OrdersPage() {
         throw new Error("Eroare la actualizarea statusului comenzii")
       }
 
-      // Actualizăm starea locală
+     
       setOrders((prevOrders) => prevOrders.map((order) => (order.id === orderId ? { ...order, status } : order)))
 
       toast.success(`Comanda #${orderId} a fost actualizată la ${status}`)
 
-      // Dacă statusul este CLOSED, reîmprospătăm lista pentru a o elimina
+      
       if (status === "CLOSED") {
         setTimeout(() => {
           fetchOrders()
@@ -193,12 +185,10 @@ export default function OrdersPage() {
     }
   }
 
-  // Filter orders by type and status
   const getFilteredOrders = (type: "Mancare" | "Bauturi", status?: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
     return orders.filter((order) => order.type === type && (status ? order.status === status : true))
   }
 
-  // Get status badge component
   const getStatusBadge = (status: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
     switch (status) {
       case "PENDING":
@@ -218,7 +208,6 @@ export default function OrdersPage() {
     }
   }
 
-  // Calculează totalul unei comenzi
   const calculateOrderTotal = (items: OrderItem[]) => {
     return items.reduce((total, item) => total + item.price * item.quantity, 0)
   }

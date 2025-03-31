@@ -42,12 +42,10 @@ export function useSendOrder() {
         throw new Error("Eroare la trimiterea comenzii")
       }
 
-      // Confirmăm comanda în starea locală
       dispatch({ type: "CONFIRM_ORDER" })
 
       toast.success("Comanda a fost trimisă cu succes!")
 
-      // Resetăm confirmarea după 3 secunde
       setTimeout(() => {
         dispatch({ type: "RESET_ORDER_CONFIRMATION" })
       }, 3000)

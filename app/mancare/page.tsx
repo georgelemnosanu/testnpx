@@ -20,17 +20,14 @@ export default function MancareMenu() {
           throw new Error("Eroare la încărcarea meniului")
         }
 
-        // Obținem un array plat de MenuItem
         const data: MenuItem[] = await response.json()
 
-        // Normalizează datele și asigură-te că avem toate proprietățile necesare
         const normalizedData: MenuItem[] = data.map((item) => ({
           ...item,
           image: item.image || "/placeholder.svg",
-          category: item.category || "Altele", // Asigură-te că avem întotdeauna o categorie
+          category: item.category || "Altele", 
         }))
 
-        // Grupăm produsele după câmpul "category"
         const groups: { [key: string]: MenuItem[] } = {}
         normalizedData.forEach((item) => {
           if (!groups[item.category]) {
@@ -39,7 +36,6 @@ export default function MancareMenu() {
           groups[item.category].push(item)
         })
 
-        // Convertim obiectul în array de MenuSection
         const groupedArray: MenuSectionType[] = Object.keys(groups).map((category) => ({
           title: category,
           items: groups[category],

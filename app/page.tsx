@@ -13,48 +13,37 @@ export default function HomePage() {
   const [hasTableId, setHasTableId] = useState(false)
 
   useEffect(() => {
-    // Verificăm dacă suntem în browser
     if (typeof window === "undefined") return
 
-    // Preia query string-ul din URL
     const params = new URLSearchParams(window.location.search)
     const tableId = params.get("tableId")
 
     if (tableId) {
-      // Salvăm tableId-ul în sessionStorage
       sessionStorage.setItem("tableId", tableId)
       setHasTableId(true)
 
-      // Setăm tableId-ul în context
       dispatch({ type: "SET_TABLE_ID", payload: tableId })
 
-      // Afișăm un toast de confirmare
       toast.success("Masa a fost configurată", {
         description: `Ești conectat la masa ${tableId}`,
       })
 
-      // Redirecționare către meniu
       router.replace("/menu")
     } else {
-      // Verificăm dacă avem un tableId salvat în sessionStorage
       const storedTableId = sessionStorage.getItem("tableId")
 
       if (!storedTableId) {
-        // Dacă nu avem tableId, afișăm un mesaj
         setHasTableId(false)
         toast.error("Nu ești conectat la o masă", {
           description: "Te rugăm să scanezi codul QR de pe masă",
           duration: 5000,
         })
       } else {
-        // Dacă avem tableId în sessionStorage, îl setăm în context
         setHasTableId(true)
         dispatch({ type: "SET_TABLE_ID", payload: storedTableId })
 
-        // Verificăm starea mesei la server pentru a ne asigura că este încă activă
         checkTableStatus(storedTableId)
 
-        // Redirecționare către meniu și pentru cazul când tableId este în sessionStorage
         router.replace("/menu")
       }
     }
@@ -62,7 +51,6 @@ export default function HomePage() {
     setLoading(false)
   }, [router, dispatch])
 
-  // Funcție pentru a verifica starea mesei la server
   const checkTableStatus = async (tableId: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/table/${tableId}`)
@@ -73,7 +61,6 @@ export default function HomePage() {
 
       const data = await response.json()
 
-      // Dacă masa nu mai este activă (a fost resetată sau închisă), resetăm și coșul local
       if (data.billRequested || !data.isActive) {
         dispatch({ type: "RESET_TABLE" })
         toast.info("Masa a fost resetată", {
@@ -85,7 +72,6 @@ export default function HomePage() {
     }
   }
 
-  // Afișăm un loader în timpul încărcării
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center">

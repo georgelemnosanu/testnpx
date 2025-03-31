@@ -48,6 +48,5 @@ export function useSendOrder() {
     }
   }
 
-  // întorci funcția pe care o vei apela în componentă
   return { sendOrder }
 }

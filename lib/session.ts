@@ -1,4 +1,4 @@
-// Utility functions for managing table sessions
+
 export interface TableSession {
     tableId: string
     startTime: number
@@ -6,7 +6,7 @@ export interface TableSession {
   }
   
   const SESSION_KEY = "table_session"
-  const SESSION_DURATION = 2 * 60 * 60 * 1000 // 2 hours in milliseconds
+  const SESSION_DURATION = 2 * 60 * 60 * 1000 
   
   export function createTableSession(tableId: string): TableSession {
     const now = Date.now()
@@ -32,7 +32,7 @@ export interface TableSession {
   
       const session: TableSession = JSON.parse(sessionData)
   
-      // Check if session has expired
+     
       if (Date.now() > session.expiresAt) {
         sessionStorage.removeItem(SESSION_KEY)
         return null

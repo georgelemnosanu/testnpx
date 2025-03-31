@@ -55,15 +55,12 @@ export function MenuSection({ section }: MenuSectionProps) {
       },
     })
 
-    // Show success toast
     toast.success(`${item.name} adăugat în coș`, {
       description: `Cantitate: ${quantity}`,
     })
 
-    // Close dialog after adding to cart
     setDialogOpen(false)
 
-    // Reset quantities and notes for this item
     setQuantities((prev) => ({ ...prev, [item.id]: 1 }))
     setNotes((prev) => ({ ...prev, [item.id]: "" }))
   }
@@ -76,7 +73,6 @@ export function MenuSection({ section }: MenuSectionProps) {
   }
 
   const callWaiter = () => {
-    // Here you would implement the waiter calling functionality
     toast.success("Chelnerul a fost chemat", {
       description: "Un ospătar va veni la masa dvs. în curând",
     })

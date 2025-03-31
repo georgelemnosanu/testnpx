@@ -12,7 +12,6 @@ export function LuxuryBackground() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas size
     const setCanvasSize = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -20,7 +19,6 @@ export function LuxuryBackground() {
     setCanvasSize()
     window.addEventListener("resize", setCanvasSize)
 
-    // Particle configuration
     const particles: Particle[] = []
     const particleCount = 50
     const particleBaseRadius = 1
@@ -29,7 +27,6 @@ export function LuxuryBackground() {
     const lineDistance = 150
     const lineWidth = 0.3
 
-    // Create particles
     class Particle {
       x: number
       y: number
@@ -54,15 +51,12 @@ export function LuxuryBackground() {
       }
 
       update() {
-        // Update position
         this.x += this.speedX
         this.y += this.speedY
 
-        // Bounce off edges
         if (this.x < 0 || this.x > this.canvasWidth) this.speedX *= -1
         if (this.y < 0 || this.y > this.canvasHeight) this.speedY *= -1
 
-        // Smooth opacity transition
         this.opacity += (this.targetOpacity - this.opacity) * 0.02
         if (Math.abs(this.opacity - this.targetOpacity) < 0.01) {
           this.targetOpacity = Math.random()
@@ -77,29 +71,23 @@ export function LuxuryBackground() {
       }
     }
 
-    // Initialize particles
     for (let i = 0; i < particleCount; i++) {
       particles.push(new Particle(canvas))
     }
 
-    // Animation loop
     const animate = () => {
-      // Create gradient background
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
       gradient.addColorStop(0, "#1a1a1a")
       gradient.addColorStop(0.5, "#2a2a2a")
       gradient.addColorStop(1, "#1a1a1a")
 
-      // Clear canvas with gradient
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // Update and draw particles
       particles.forEach((particle, index) => {
         particle.update()
         particle.draw(ctx)
 
-        // Draw lines between nearby particles
         for (let j = index + 1; j < particles.length; j++) {
           const dx = particle.x - particles[j].x
           const dy = particle.y - particles[j].y
