@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Check, Coffee, UtensilsCrossed, Bell, BellOff } from "lucide-react"
+import { Clock, Check, Coffee, UtensilsCrossed, Bell, BellOff, ChefHat } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ro } from "date-fns/locale"
 import { toast } from "sonner"
@@ -18,7 +18,7 @@ interface MenuItem {
   speciality: {
     specialityClass: {
       id: number
-      name: string 
+      name: string
     }
   }
   category: string
@@ -74,15 +74,13 @@ export default function OrdersPage() {
       const apiOrders: ApiOrder[] = await response.json()
 
       const transformedOrders: Order[] = apiOrders
-        .filter((order) => order.status !== "CLOSED") 
+        .filter((order) => order.status !== "CLOSED")
         .map((apiOrder) => {
-     
           const orderType =
             apiOrder.menuItemsWithQuantities.length > 0
               ? (apiOrder.menuItemsWithQuantities[0].menuItem.speciality.specialityClass.name as "Mancare" | "Bauturi")
-              : "Mancare" 
+              : "Mancare"
 
-          
           const items: OrderItem[] = apiOrder.menuItemsWithQuantities.map((item) => ({
             id: item.id,
             name: item.menuItem.name,
@@ -95,13 +93,12 @@ export default function OrdersPage() {
             id: apiOrder.id,
             tableId: apiOrder.table.tableName,
             items: items,
-            timestamp: Date.now() - Math.floor(Math.random() * 1000 * 60 * 10), 
+            timestamp: Date.now() - Math.floor(Math.random() * 1000 * 60 * 10),
             status: apiOrder.status,
             type: orderType,
           }
         })
 
-     
       if (orders.length > 0 && transformedOrders.length > orders.length) {
         playNotificationSound()
       }
@@ -130,16 +127,15 @@ export default function OrdersPage() {
 
     pollingIntervalRef.current = setInterval(() => {
       fetchOrders()
-    }, 10000) 
+    }, 10000)
 
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current)
       }
     }
-  }, []) 
+  }, [])
 
-  
   const playNotificationSound = () => {
     if (soundEnabled && audioRef.current) {
       audioRef.current.play().catch((err) => {
@@ -148,7 +144,6 @@ export default function OrdersPage() {
     }
   }
 
- 
   const toggleSound = () => {
     setSoundEnabled(!soundEnabled)
     toast.success(soundEnabled ? "Notificări sonore dezactivate" : "Notificări sonore activate")
@@ -156,24 +151,35 @@ export default function OrdersPage() {
 
   const updateOrderStatus = async (orderId: number, status: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/command/${orderId}`, {
-        method: "PATCH",
+      let endpoint = ""
+      const method = "PUT"
+
+      if (status === "IN_PROGRESS") {
+        endpoint = `${process.env.NEXT_PUBLIC_API_URL}/command/markInProgress/${orderId}`
+      } else if (status === "CLOSED") {
+        endpoint = `${process.env.NEXT_PUBLIC_API_URL}/command/markClosed/${orderId}`
+      } else {
+        throw new Error("Invalid status transition")
+      }
+
+      const response = await fetch(endpoint, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status }),
       })
 
       if (!response.ok) {
         throw new Error("Eroare la actualizarea statusului comenzii")
       }
 
-     
+      // Update local state
       setOrders((prevOrders) => prevOrders.map((order) => (order.id === orderId ? { ...order, status } : order)))
 
-      toast.success(`Comanda #${orderId} a fost actualizată la ${status}`)
+      const statusText = status === "IN_PROGRESS" ? "în preparare" : "finalizată"
+      toast.success(`Comanda #${orderId} a fost marcată ca ${statusText}`)
 
-      
+      // Refresh orders if closed
       if (status === "CLOSED") {
         setTimeout(() => {
           fetchOrders()
@@ -187,6 +193,10 @@ export default function OrdersPage() {
 
   const getFilteredOrders = (type: "Mancare" | "Bauturi", status?: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
     return orders.filter((order) => order.type === type && (status ? order.status === status : true))
+  }
+
+  const getAllFilteredOrders = (status?: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
+    return orders.filter((order) => (status ? order.status === status : true))
   }
 
   const getStatusBadge = (status: "PENDING" | "IN_PROGRESS" | "CLOSED") => {
@@ -237,8 +247,17 @@ export default function OrdersPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="kitchen" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <ChefHat className="h-4 w-4" />
+            Bar/Mâncare
+            {getAllFilteredOrders("PENDING").length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {getAllFilteredOrders("PENDING").length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="kitchen" className="flex items-center gap-2">
             <UtensilsCrossed className="h-4 w-4" />
             Bucătărie
@@ -258,6 +277,131 @@ export default function OrdersPage() {
             )}
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="all" className="mt-6">
+          <div className="grid gap-6">
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Toate comenzile în așteptare</h2>
+              {getAllFilteredOrders("PENDING").length === 0 ? (
+                <div className="text-center py-8 bg-muted/30 rounded-lg">
+                  <p className="text-muted-foreground">Nu există comenzi în așteptare</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {getAllFilteredOrders("PENDING").map((order) => (
+                    <Card key={order.id} className="overflow-hidden">
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-center">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            {order.type === "Mancare" ? (
+                              <UtensilsCrossed className="h-4 w-4 text-orange-500" />
+                            ) : (
+                              <Coffee className="h-4 w-4 text-blue-500" />
+                            )}
+                            Comanda #{order.id} - Masa {order.tableId}
+                            <Badge variant="outline" className="text-xs">
+                              {order.type}
+                            </Badge>
+                          </CardTitle>
+                          {getStatusBadge(order.status)}
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground mt-1">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {formatDistanceToNow(order.timestamp, { addSuffix: true, locale: ro })}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="space-y-3">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex justify-between py-1 border-b last:border-0">
+                              <div>
+                                <p className="font-medium">
+                                  {item.name} x{item.quantity}
+                                </p>
+                                {item.notes && <p className="text-xs text-muted-foreground mt-1">Note: {item.notes}</p>}
+                              </div>
+                              <p className="font-medium">{item.price * item.quantity} lei</p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 pt-2 border-t flex justify-between">
+                          <span className="font-medium">Total:</span>
+                          <span className="font-bold">{calculateOrderTotal(order.items)} lei</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-end gap-2 pt-2">
+                        <Button variant="outline" size="sm" onClick={() => updateOrderStatus(order.id, "IN_PROGRESS")}>
+                          Începe prepararea
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Toate comenzile în preparare</h2>
+              {getAllFilteredOrders("IN_PROGRESS").length === 0 ? (
+                <div className="text-center py-8 bg-muted/30 rounded-lg">
+                  <p className="text-muted-foreground">Nu există comenzi în preparare</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {getAllFilteredOrders("IN_PROGRESS").map((order) => (
+                    <Card key={order.id} className="overflow-hidden">
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-center">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            {order.type === "Mancare" ? (
+                              <UtensilsCrossed className="h-4 w-4 text-orange-500" />
+                            ) : (
+                              <Coffee className="h-4 w-4 text-blue-500" />
+                            )}
+                            Comanda #{order.id} - Masa {order.tableId}
+                            <Badge variant="outline" className="text-xs">
+                              {order.type}
+                            </Badge>
+                          </CardTitle>
+                          {getStatusBadge(order.status)}
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground mt-1">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {formatDistanceToNow(order.timestamp, { addSuffix: true, locale: ro })}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="space-y-3">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex justify-between py-1 border-b last:border-0">
+                              <div>
+                                <p className="font-medium">
+                                  {item.name} x{item.quantity}
+                                </p>
+                                {item.notes && <p className="text-xs text-muted-foreground mt-1">Note: {item.notes}</p>}
+                              </div>
+                              <p className="font-medium">{item.price * item.quantity} lei</p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 pt-2 border-t flex justify-between">
+                          <span className="font-medium">Total:</span>
+                          <span className="font-bold">{calculateOrderTotal(order.items)} lei</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-end gap-2 pt-2">
+                        <Button variant="default" size="sm" onClick={() => updateOrderStatus(order.id, "CLOSED")}>
+                          <Check className="h-4 w-4 mr-2" />
+                          Finalizează
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
 
         {/* Kitchen Orders */}
         <TabsContent value="kitchen" className="mt-6">
@@ -482,4 +626,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-

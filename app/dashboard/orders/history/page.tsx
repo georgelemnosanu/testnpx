@@ -27,6 +27,21 @@ interface Order {
   type: "food" | "drinks" | "mixed"
 }
 
+interface BackendOrder {
+  id: number
+  tableId: string
+  items: Array<{
+    id: number
+    name: string
+    quantity: number
+    notes?: string
+    price: number
+    category: string
+  }>
+  createdAt: string
+  status: string
+}
+
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,44 +54,51 @@ export default function OrderHistoryPage() {
   useEffect(() => {
     const fetchOrderHistory = async () => {
       try {
-       
-        const mockOrders: Order[] = [
-          {
-            id: 1,
-            tableId: "12",
-            items: [
-              { id: 101, name: "Pizza Margherita", quantity: 2, price: 35, notes: "Fără ceapă" },
-              { id: 102, name: "Paste Carbonara", quantity: 1, price: 32 },
-            ],
-            timestamp: Date.now() - 1000 * 60 * 60 * 2, 
-            status: "completed",
-            type: "food",
-          },
-          {
-            id: 2,
-            tableId: "8",
-            items: [
-              { id: 201, name: "Mojito", quantity: 3, price: 25 },
-              { id: 202, name: "Aperol Spritz", quantity: 2, price: 28 },
-            ],
-            timestamp: Date.now() - 1000 * 60 * 60 * 3, 
-            status: "completed",
-            type: "drinks",
-          },
-          {
-            id: 3,
-            tableId: "5",
-            items: [
-              { id: 301, name: "Burger de vită", quantity: 1, price: 38 },
-              { id: 302, name: "Cola", quantity: 1, price: 8 },
-            ],
-            timestamp: Date.now() - 1000 * 60 * 60 * 5, 
-            status: "cancelled",
-            type: "mixed",
-          },
-        ]
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
 
-        setOrders(mockOrders)
+        if (!response.ok) {
+          throw new Error("Failed to fetch orders")
+        }
+
+        const backendOrders: BackendOrder[] = await response.json()
+
+        // Filter only CLOSED orders for history and map to frontend format
+        const historyOrders: Order[] = backendOrders
+          .filter((order) => order.status === "CLOSED")
+          .map((order) => {
+            // Determine order type based on items
+            const hasFood = order.items.some((item) => item.category === "FOOD" || item.category === "food")
+            const hasDrinks = order.items.some(
+              (item) => item.category === "DRINKS" || item.category === "drinks" || item.category === "DRINK",
+            )
+
+            let type: "food" | "drinks" | "mixed"
+            if (hasFood && hasDrinks) {
+              type = "mixed"
+            } else if (hasFood) {
+              type = "food"
+            } else {
+              type = "drinks"
+            }
+
+            return {
+              id: order.id,
+              tableId: order.tableId,
+              items: order.items.map((item) => ({
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                notes: item.notes,
+                price: item.price,
+              })),
+              timestamp: new Date(order.createdAt).getTime(),
+              status: "completed" as const, // All CLOSED orders are completed
+              type,
+            }
+          })
+          .sort((a, b) => b.timestamp - a.timestamp) // Sort by newest first
+
+        setOrders(historyOrders)
         setLoading(false)
       } catch (err) {
         console.error("Error fetching order history:", err)
@@ -252,4 +274,3 @@ export default function OrderHistoryPage() {
     </div>
   )
 }
-
